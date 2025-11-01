@@ -34,7 +34,12 @@ function is_cache_valid() {
     fi
     
     local current_time=$(date +%s)
-    local file_time=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null)
+    local file_time
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        file_time=$(stat -f %m "$cache_file")
+    else
+        file_time=$(stat -c %Y "$cache_file")
+    fi
     local age=$((current_time - file_time))
     
     if [[ $age -lt $ttl ]]; then
