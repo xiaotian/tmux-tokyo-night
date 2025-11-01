@@ -45,14 +45,14 @@ function is_cache_valid() {
 }
 
 function update_location_cache() {
-    curl -s http://ip-api.com/json | jq -r '"\(.city), \(.country)"' 2>/dev/null > "$LOCATION_CACHE.tmp" && mv "$LOCATION_CACHE.tmp" "$LOCATION_CACHE"
+    (curl -s http://ip-api.com/json | jq -r '"\(.city), \(.country)"' 2>/dev/null > "$LOCATION_CACHE.tmp" && mv "$LOCATION_CACHE.tmp" "$LOCATION_CACHE") >/dev/null 2>&1 &
 }
 
 function update_weather_cache() {
     local location="$1"
     local unit="$2"
     local format="$3"
-    curl -sL "wttr.in/${location// /%20}?${unit:+$unit&}format=${format}" 2>/dev/null > "$WEATHER_CACHE.tmp" && mv "$WEATHER_CACHE.tmp" "$WEATHER_CACHE"
+    (curl -sL "wttr.in/${location// /%20}?${unit:+$unit&}format=${format}" 2>/dev/null > "$WEATHER_CACHE.tmp" && mv "$WEATHER_CACHE.tmp" "$WEATHER_CACHE") >/dev/null 2>&1 &
 }
 
 function get_location() {
@@ -66,15 +66,12 @@ function get_location() {
         cat "$LOCATION_CACHE"
         # Update cache in background if expired
         if ! is_cache_valid "$LOCATION_CACHE" "$LOCATION_CACHE_TTL"; then
-            update_location_cache &
+            update_location_cache
         fi
     else
-        # No cache exists, must fetch now (first run)
-        local location=$(curl -s http://ip-api.com/json | jq -r '"\(.city), \(.country)"' 2> /dev/null)
-        if [[ -n "$location" && "$location" != "null, null" ]]; then
-            echo "$location" > "$LOCATION_CACHE"
-            echo "$location"
-        fi
+        # No cache exists, fetch in background and return empty for now
+        update_location_cache
+        echo ""
     fi
 }
 
@@ -86,15 +83,12 @@ function get_weather() {
         cat "$WEATHER_CACHE"
         # Update cache in background if expired
         if ! is_cache_valid "$WEATHER_CACHE" "$WEATHER_CACHE_TTL"; then
-            update_weather_cache "$location" "$plugin_weather_unit" "$plugin_weather_format_string" &
+            update_weather_cache "$location" "$plugin_weather_unit" "$plugin_weather_format_string"
         fi
     else
-        # No cache exists, must fetch now (first run)
-        local weather=$(curl -sL "wttr.in/${location// /%20}?${plugin_weather_unit:+$plugin_weather_unit&}format=${plugin_weather_format_string}" 2> /dev/null)
-        if [[ -n "$weather" ]]; then
-            echo "$weather" > "$WEATHER_CACHE"
-            echo "$weather"
-        fi
+        # No cache exists, fetch in background and return placeholder
+        update_weather_cache "$location" "$plugin_weather_unit" "$plugin_weather_format_string"
+        echo "..."
     fi
 }
 
