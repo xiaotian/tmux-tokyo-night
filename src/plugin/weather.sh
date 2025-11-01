@@ -44,22 +44,36 @@ function is_cache_valid() {
     fi
 }
 
+function update_location_cache() {
+    curl -s http://ip-api.com/json | jq -r '"\(.city), \(.country)"' 2>/dev/null > "$LOCATION_CACHE.tmp" && mv "$LOCATION_CACHE.tmp" "$LOCATION_CACHE"
+}
+
+function update_weather_cache() {
+    local location="$1"
+    local unit="$2"
+    local format="$3"
+    curl -sL "wttr.in/${location// /%20}?${unit:+$unit&}format=${format}" 2>/dev/null > "$WEATHER_CACHE.tmp" && mv "$WEATHER_CACHE.tmp" "$WEATHER_CACHE"
+}
+
 function get_location() {
     if [[ -n "$plugin_weather_location" ]]; then
         echo "$plugin_weather_location"
         return
     fi
     
-    if is_cache_valid "$LOCATION_CACHE" "$LOCATION_CACHE_TTL"; then
+    # If cache exists, use it immediately (even if stale) for fast startup
+    if [[ -f "$LOCATION_CACHE" ]]; then
         cat "$LOCATION_CACHE"
+        # Update cache in background if expired
+        if ! is_cache_valid "$LOCATION_CACHE" "$LOCATION_CACHE_TTL"; then
+            update_location_cache &
+        fi
     else
+        # No cache exists, must fetch now (first run)
         local location=$(curl -s http://ip-api.com/json | jq -r '"\(.city), \(.country)"' 2> /dev/null)
         if [[ -n "$location" && "$location" != "null, null" ]]; then
             echo "$location" > "$LOCATION_CACHE"
             echo "$location"
-        elif [[ -f "$LOCATION_CACHE" ]]; then
-            # If API fails, use stale cache as fallback
-            cat "$LOCATION_CACHE"
         fi
     fi
 }
@@ -67,16 +81,19 @@ function get_location() {
 function get_weather() {
     local location="$1"
     
-    if is_cache_valid "$WEATHER_CACHE" "$WEATHER_CACHE_TTL"; then
+    # If cache exists, use it immediately (even if stale) for fast startup
+    if [[ -f "$WEATHER_CACHE" ]]; then
         cat "$WEATHER_CACHE"
+        # Update cache in background if expired
+        if ! is_cache_valid "$WEATHER_CACHE" "$WEATHER_CACHE_TTL"; then
+            update_weather_cache "$location" "$plugin_weather_unit" "$plugin_weather_format_string" &
+        fi
     else
+        # No cache exists, must fetch now (first run)
         local weather=$(curl -sL "wttr.in/${location// /%20}?${plugin_weather_unit:+$plugin_weather_unit&}format=${plugin_weather_format_string}" 2> /dev/null)
         if [[ -n "$weather" ]]; then
             echo "$weather" > "$WEATHER_CACHE"
             echo "$weather"
-        elif [[ -f "$WEATHER_CACHE" ]]; then
-            # If API fails, use stale cache as fallback
-            cat "$WEATHER_CACHE"
         fi
     fi
 }
