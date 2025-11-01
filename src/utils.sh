@@ -15,8 +15,26 @@ function get_tmux_option() {
 function generate_left_side_string() {
 
 	session_icon=$(get_tmux_option "@theme_session_icon" " ")
+	hostname_icon=$(get_tmux_option "@theme_hostname_icon" "󰒋 ")
+	show_hostname=$(get_tmux_option "@theme_show_hostname" "0")
 	left_separator=$(get_tmux_option "@theme_left_separator" "")
 	transparent=$(get_tmux_option "@theme_transparent_status_bar" "false")
+
+	local hostname_part=""
+	local session_separator_start=""
+	if [ "$show_hostname" = "1" ]; then
+		if [ "$transparent" = "true" ]; then
+			local hostname_separator="#[bg=default,fg=${PALLETE[blue0]}]${left_separator:?}#[none]"
+			local left_separator_inverse=$(get_tmux_option "@theme_transparent_left_separator_inverse" "")
+			session_separator_start="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator_inverse}#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]}#[fg=${PALLETE[bg_highlight]}]"
+		else
+			local hostname_separator="#[bg=${PALLETE[bg_highlight]},fg=${PALLETE[blue0]}]${left_separator:?}#[none]"
+			session_separator_start="#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]}#[fg=${PALLETE[bg_highlight]}]${left_separator:?}#[none]"
+		fi
+		hostname_part="#[fg=${PALLETE[white]},bold,bg=${PALLETE[blue0]}] ${hostname_icon}#h ${hostname_separator}"
+	else
+		session_separator_start=""
+	fi
 
 	if [ "$transparent" = "true" ]; then
 		local separator_end="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator:?}#[none]"
@@ -24,7 +42,7 @@ function generate_left_side_string() {
 		local separator_end="#[bg=${PALLETE[bg_highlight]}]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator:?}#[none]"
 	fi
 
-	echo "#[fg=${PALLETE[fg_gutter]},bold]#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]} ${session_icon} #S ${separator_end}"
+	echo "${hostname_part}${session_separator_start}#[fg=${PALLETE[fg_gutter]},bold]#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]} ${session_icon} #S ${separator_end}"
 }
 
 function generate_inactive_window_string() {
