@@ -24,25 +24,25 @@ function generate_left_side_string() {
 	local session_separator_start=""
 	if [ "$show_hostname" = "1" ]; then
 		if [ "$transparent" = "true" ]; then
-			local hostname_separator="#[bg=default,fg=${PALLETE[blue0]}]${left_separator:?}#[none]"
+			local hostname_separator="#[bg=default,fg=${PALLETE[green]}]${left_separator:?}#[none]"
 			local left_separator_inverse=$(get_tmux_option "@theme_transparent_left_separator_inverse" "")
-			session_separator_start="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator_inverse}#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]}#[fg=${PALLETE[bg_highlight]}]"
+			session_separator_start="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[blue0]}]}${left_separator_inverse}#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[blue0]}]}#[fg=${PALLETE[bg_highlight]}]"
 		else
-			local hostname_separator="#[bg=${PALLETE[bg_highlight]},fg=${PALLETE[blue0]}]${left_separator:?}#[none]"
-			session_separator_start="#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]}#[fg=${PALLETE[bg_highlight]}]${left_separator:?}#[none]"
+			local hostname_separator="#[bg=${PALLETE[bg_highlight]},fg=${PALLETE[green]}]${left_separator:?}#[none]"
+			session_separator_start="#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[blue0]}]}#[fg=${PALLETE[bg_highlight]}]${left_separator:?}#[none]"
 		fi
-		hostname_part="#[fg=${PALLETE[white]},bold,bg=${PALLETE[blue0]}] ${hostname_icon}#h ${hostname_separator}"
+		hostname_part="#[fg=${PALLETE[fg_gutter]},bold,bg=${PALLETE[green]}] ${hostname_icon}#h ${hostname_separator}"
 	else
 		session_separator_start=""
 	fi
 
 	if [ "$transparent" = "true" ]; then
-		local separator_end="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator:?}#[none]"
+		local separator_end="#[bg=default]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[blue0]}]}${left_separator:?}#[none]"
 	else
-		local separator_end="#[bg=${PALLETE[bg_highlight]}]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[green]}]}${left_separator:?}#[none]"
+		local separator_end="#[bg=${PALLETE[bg_highlight]}]#{?client_prefix,#[fg=${PALLETE[yellow]}],#[fg=${PALLETE[blue0]}]}${left_separator:?}#[none]"
 	fi
 
-	echo "${hostname_part}${session_separator_start}#[fg=${PALLETE[fg_gutter]},bold]#{?client_prefix,#[bg=${PALLETE[yellow]}],#[bg=${PALLETE[green]}]} ${session_icon} #S ${separator_end}"
+	echo "${hostname_part}${session_separator_start}#[fg=${PALLETE[fg_gutter]},bold]#{?client_prefix,#[bg=${PALLETE[yellow]}],#[fg=${PALLETE[white]},bg=${PALLETE[blue0]}]} ${session_icon} #S ${separator_end}"
 }
 
 function generate_inactive_window_string() {
